@@ -15,3 +15,5 @@ The application should provide the following functions:
  
 
 Invest max. 3 hours
+
+URL to open in localhost `http://localhost:8081/`
