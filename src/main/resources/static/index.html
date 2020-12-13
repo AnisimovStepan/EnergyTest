@@ -24,10 +24,13 @@
 
   <script>
     window.sensor_API = {
-        serverURL: "https://localhost:8081/stats"
+        serverURL: "http://localhost:8081/stats"
     };
     // Get
-    const getStats = async function () {
+    const getStats = function () {
+        function intServerToFloat(val) {
+            return (val/100).toFixed(2);
+        }
         function createStatsDOM(parentDOM, resp) {
             // Clear old
             parentDOM.innerHTML = "";
@@ -35,13 +38,13 @@
             const wrapper = document.createElement("div");
 
             const minDOM = document.createElement("div");
-            minDOM.innerHTML = resp.min;
+            minDOM.innerHTML = `MIN: ${intServerToFloat(resp.min)}`;
             wrapper.append(minDOM);
             const maxDOM = document.createElement("div");
-            maxDOM.innerHTML = resp.max;
+            maxDOM.innerHTML = `MAX: ${intServerToFloat(resp.max)}`;
             wrapper.append(maxDOM);
             const avrDOM = document.createElement("div");
-            avrDOM.innerHTML = resp.average;
+            avrDOM.innerHTML = `AVERAGE: ${intServerToFloat(resp.average)}`;
             wrapper.append(avrDOM);
 
             const listDOM = document.createElement("ul");
@@ -55,17 +58,29 @@
             parentDOM.append(wrapper);
         }
 
-        const tempResp = await fetch(window.sensor_API.serverURL + "/temp");
-        const humResp = await fetch(window.sensor_API.serverURL + "/temp");
-
-        createStatsDOM(document.getElementById("tmp"));
-        createStatsDOM(document.getElementById("hum"));
+        // Set Temp stats
+        fetch(window.sensor_API.serverURL + "/temp")
+            .then(resp => resp.json())
+            .then(resp => {
+            createStatsDOM(document.getElementById("tmp"), resp);
+        });
+        // Set Hum stats
+        fetch(window.sensor_API.serverURL + "/hum")
+            .then(resp => resp.json())
+            .then(resp => {
+            createStatsDOM(document.getElementById("hum"), resp);
+        });
     };
+
     document.getElementById("get-btn").addEventListener("click", getStats);
 
     // Reset
     const reset = function () {
-        fetch(window.sensor_API.serverURL + "/reset");
+        fetch(window.sensor_API.serverURL + "/reset").then(() => {
+            document.getElementById("tmp").innerHTML = "";
+            document.getElementById("hum").innerHTML = "";
+        });
+
     };
     document.getElementById("reset-btn").addEventListener("click", reset);
 

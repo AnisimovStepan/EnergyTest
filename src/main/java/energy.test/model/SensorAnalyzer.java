@@ -4,15 +4,15 @@ import energy.test.util.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SensorAnalyzer implements Analyzable {
     private static final Logger logger = LogManager.getLogger(SensorAnalyzer.class.getName());
-    private static final int secondsToCheck = 5000;
+    private static final int millisecondsToCheck = 5000;
     
     private Timer timer;
     private class SensorGetValueTask extends TimerTask {
@@ -40,28 +40,28 @@ public class SensorAnalyzer implements Analyzable {
             }
             
             // Calculate stats
-            if (vl < min) { min = vl; }
-            if (vl > max) { max = vl; }
+            if (vl < min.get()) { min.getAndSet(vl); }
+            if (vl > max.get()) { max.getAndSet(vl); }
             
             valuesFromSensor.add(vl);
             lastSum.getAndAdd(vl);
             
-            average = lastSum.get() / valuesFromSensor.size();
+            average.getAndSet(lastSum.get() / valuesFromSensor.size());
     
             logger.info(
                     String.format("Stats from %s, min: %s, max: %s, average: %s",
                             sensor.getSensorName(),
-                            Util.IntegerWithPrecisionToString(min),
-                            Util.IntegerWithPrecisionToString(max),
-                            Util.IntegerWithPrecisionToString(average)
+                            Util.IntegerWithPrecisionToString(min.get()),
+                            Util.IntegerWithPrecisionToString(max.get()),
+                            Util.IntegerWithPrecisionToString(average.get())
                     )
             );
         }
     }
     
-    private int min = 0;
-    private int max = 0;
-    private int average = 0;
+    private AtomicInteger min;
+    private AtomicInteger max;
+    private AtomicInteger average;
     private AtomicInteger lastSum;
     
     private Measurable sensor;
@@ -72,40 +72,46 @@ public class SensorAnalyzer implements Analyzable {
     public SensorAnalyzer(Measurable sensor) {
         this.sensor = sensor;
     
+        this.min = new AtomicInteger(0);
+        this.max = new AtomicInteger(0);
+        this.average = new AtomicInteger(0);
         this.lastSum = new AtomicInteger(0);
         
-        this.valuesFromSensor = new ArrayList<>();
-        this.alarms = new ArrayList<>();
+        this.valuesFromSensor = new CopyOnWriteArrayList<>();
+        this.alarms = new CopyOnWriteArrayList<>();
         
         this.startSensorCheck();
     }
     
     private void startSensorCheck() {
         timer = new Timer();
-        timer.schedule(new SensorGetValueTask(), 0, secondsToCheck);
+        timer.schedule(new SensorGetValueTask(), 0, millisecondsToCheck);
     }
     
     @Override
     public void reset() {
-        this.min = 0;
-        this.max = 0;
-        this.average = 0;
-        this.lastSum.set(0);
+        this.min.getAndSet(0);
+        this.max.getAndSet(0);
+        this.average.getAndSet(0);
+        this.lastSum.getAndSet(0);
+    
+        valuesFromSensor.clear();
+        alarms.clear();
     }
     
     @Override
     public int getMin() {
-        return min;
+        return min.get();
     }
     
     @Override
     public int getMax() {
-        return max;
+        return max.get();
     }
     
     @Override
     public int getAverage() {
-        return average;
+        return average.get();
     }
     
     @Override

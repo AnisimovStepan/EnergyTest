@@ -1,5 +1,7 @@
 package energy.test.model;
 
+import energy.test.util.Util;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -9,7 +11,7 @@ public class AlarmRecord {
     private LocalDateTime dateTime;
     private int value;
     
-    public AlarmRecord(int value) {
+    AlarmRecord(int value) {
         this.value = value;
         this.dateTime = LocalDateTime.now();
     }
@@ -18,6 +20,6 @@ public class AlarmRecord {
     public String toString() {
         return "Alarm! " +
                 "Time: " + formatter.format(dateTime) +
-                ", Value: " + value;
+                ", Value: " + Util.IntegerWithPrecisionToString(value);
     }
 }
