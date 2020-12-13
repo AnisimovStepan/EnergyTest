@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sensors analytics</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+  <h1>Sensors analytics</h1>
+  <p>
+    <button id="get-btn">Get</button>
+    <button id="reset-btn">Reset</button>
+  </p>
+  <h3>Temperature sensor analytic</h3>
+  <p id="tmp">
+  </p>
+  <h3>Humidity sensor analytic</h3>
+  <p id="hum">
+  </p>
+
+  <script>
+    window.sensor_API = {
+        serverURL: "https://localhost:8081/stats"
+    };
+    // Get
+    const getStats = async function () {
+        function createStatsDOM(parentDOM, resp) {
+            // Clear old
+            parentDOM.innerHTML = "";
+
+            const wrapper = document.createElement("div");
+
+            const minDOM = document.createElement("div");
+            minDOM.innerHTML = resp.min;
+            wrapper.append(minDOM);
+            const maxDOM = document.createElement("div");
+            maxDOM.innerHTML = resp.max;
+            wrapper.append(maxDOM);
+            const avrDOM = document.createElement("div");
+            avrDOM.innerHTML = resp.average;
+            wrapper.append(avrDOM);
+
+            const listDOM = document.createElement("ul");
+            wrapper.append(listDOM);
+            for (let i = 0; i < resp.alarms.length; i++) {
+                const elemDom = document.createElement("li");
+                elemDom.innerHTML = resp.alarms[i];
+                listDOM.append(elemDom);
+            }
+
+            parentDOM.append(wrapper);
+        }
+
+        const tempResp = await fetch(window.sensor_API.serverURL + "/temp");
+        const humResp = await fetch(window.sensor_API.serverURL + "/temp");
+
+        createStatsDOM(document.getElementById("tmp"));
+        createStatsDOM(document.getElementById("hum"));
+    };
+    document.getElementById("get-btn").addEventListener("click", getStats);
+
+    // Reset
+    const reset = function () {
+        fetch(window.sensor_API.serverURL + "/reset");
+    };
+    document.getElementById("reset-btn").addEventListener("click", reset);
+
+  </script>
+</body>
+</html>
